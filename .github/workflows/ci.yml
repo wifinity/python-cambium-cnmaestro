@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+      - name: Test
+        run: |
+          make venv
+          make unit-tests
+
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+      - name: Create environment
+        run: make venv
+      - name: Format check
+        run: make format-check
+      - name: Lint
+        run: make lint
+      - name: Type check
+        run: make typecheck
+      - name: Build
+        run: make build
+
