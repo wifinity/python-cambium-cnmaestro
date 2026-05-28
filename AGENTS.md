@@ -46,6 +46,8 @@ Current operation methods:
 
 ## Testing
 
+- Run the full suite (lint, typecheck, unit tests) with `make tests` (alias: `make test`).
+  Individual targets are also available: `make lint`, `make typecheck`, `make unit-tests`.
 - Tests live in `tests/` and use `pytest` (see `pyproject.toml`).
 - Prefer `pytest-httpx` for unit tests that assert HTTP request/response behavior.
 - When adding or changing endpoints, add tests that cover:
