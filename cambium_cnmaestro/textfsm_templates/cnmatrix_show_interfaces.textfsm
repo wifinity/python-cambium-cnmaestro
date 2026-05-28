@@ -1,0 +1,20 @@
+Value Required NAME (\S+)
+Value ADMIN_STATUS (up|down)
+Value LINE_PROTOCOL_STATUS (up|down)
+Value MAC_ADDRESS ([0-9A-Fa-f:\.\-]+)
+Value MTU (\d+)
+Value SPEED_VALUE (\d+(?:\.\d+)?)
+Value SPEED_UNIT (Gbps|Mbps)
+Value LAST_TRANSITION (.+)
+
+Start
+  ^${NAME}\s+(?:is\s+)?${ADMIN_STATUS},\s+line protocol is\s+${LINE_PROTOCOL_STATUS}(?:\s+\([^)]*\))?\s*$$ -> Interface
+
+Interface
+  ^${NAME}\s+(?:is\s+)?${ADMIN_STATUS},\s+line protocol is\s+${LINE_PROTOCOL_STATUS}(?:\s+\([^)]*\))?\s*$$ -> Interface
+  ^\s*Hardware Address is ${MAC_ADDRESS}
+  ^\s*Last transition:\s+${LAST_TRANSITION}
+  ^\s*MTU\s+${MTU}\s+bytes,.*,\s+${SPEED_VALUE}\s+${SPEED_UNIT},.*$$ -> Record
+  ^\s*MTU\s+${MTU}\s+bytes.*$$ -> Record
+  ^__TEXTFSM_EOF__$$ -> Record
+  ^.*$$ -> Continue

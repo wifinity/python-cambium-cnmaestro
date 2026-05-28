@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..errors import CnMaestroError, CnMaestroNotFoundError
 from ..http import CnMaestroHTTPClient
+from ..paging import extract_single_item
+from ..results import UpsertResult
 
 
 class SwitchGroupsResource:
@@ -20,6 +23,28 @@ class SwitchGroupsResource:
 
     def update(self, *, name: str, switch_group: dict[str, Any]) -> Any:
         return self._http.request("PUT", f"/cnmatrix/switch_groups/{name}", json=switch_group)
+
+    def find(self, *, name: str, params: dict[str, Any] | None = None) -> dict[str, Any] | None:
+        try:
+            page = self.get(name=name, params=params)
+        except CnMaestroNotFoundError:
+            return None
+        if not isinstance(page, dict):
+            raise CnMaestroError("Expected JSON object response for switch group get")
+        return extract_single_item(page)
+
+    def upsert(self, *, switch_group: dict[str, Any]) -> UpsertResult:
+        name = switch_group.get("name")
+        if not isinstance(name, str) or not name:
+            raise CnMaestroError('switch_group["name"] is required for upsert')
+
+        exists = self.find(name=name) is not None
+        if exists:
+            self.update(name=name, switch_group=switch_group)
+            return UpsertResult(created=False, name=name, status=200)
+
+        self.create(switch_group=switch_group)
+        return UpsertResult(created=True, name=name, status=200)
 
 
 class SwitchGroupsPortsResource:

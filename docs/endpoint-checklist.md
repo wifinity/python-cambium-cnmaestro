@@ -1,6 +1,6 @@
-# Endpoint checklist (StackStorm pack → SDK)
+# Endpoint checklist (SDK scope)
 
-This checklist is derived from the existing StackStorm pack at `/Users/johan/git/st2/cnmaestro` and cross-checked against the OpenAPI spec in `cambium-cnmaestro-6.1.0-bundled.yaml`.
+This checklist tracks implemented SDK coverage and is cross-checked against the bundled OpenAPI spec in `cambium-cnmaestro-6.1.0-bundled.yaml`.
 
 ## Auth + base URL
 
@@ -28,7 +28,7 @@ This checklist is derived from the existing StackStorm pack at `/Users/johan/git
 - [x] `GET /networks`
 - [x] `GET /networks/{name}`
 - [x] `POST /networks`
-- [x] `PUT /networks/{name}` (StackStorm pack avoided update; validate server behavior in real env)
+- [x] `PUT /networks/{name}` (cnMaestro network update is unreliable; validate server behavior in real env)
 
 ## Sites (network scoped)
 
@@ -57,7 +57,25 @@ This checklist is derived from the existing StackStorm pack at `/Users/johan/git
 - [x] `GET /cnmatrix/switch_groups_ports/{switch_group_name}/{device_mac}`
 - [x] `PUT /cnmatrix/ports` (body includes `ports` array)
 
-## Non-cnMaestro leftovers (do not port)
+## Operations helpers
 
-- [ ] `DELETE /dcim/cables/{{ id }}/` (NetBox-looking leftover in StackStorm pack; not in cnMaestro spec)
+Higher-level helpers layered on top of CRUD wrappers (these are **SDK methods**, not REST endpoints):
+
+- `client.devices.find(mac=..., msn=...)`
+- `client.devices.get_status(mac=..., msn=...)`
+- `client.devices.upsert(device=..., mac=..., msn=...)`
+- `client.devices.bulk_upsert(updates=...)`
+- `client.devices.get_interfaces(mac=..., msn=...)`
+- `client.networks.upsert(network=...)`
+- `client.sites.upsert(network_id=..., site=...)`
+- `client.wifi_enterprise.wlans.upsert(wlan=...)`
+- `client.wifi_enterprise.ap_groups.upsert(ap_group=..., wlans=...)`
+- `client.cnmatrix.switch_groups.find(name=...)`
+- `client.cnmatrix.switch_groups.upsert(switch_group=...)`
+- `client.cnmatrix.ports.update(ports=...)`
+- `client.cnmatrix.switch_groups_ports.list_for_switch_group(...)`
+
+## Out-of-scope endpoints (do not add)
+
+- [ ] `DELETE /dcim/cables/{{ id }}/` (NetBox-looking leftover; not in cnMaestro spec)
 

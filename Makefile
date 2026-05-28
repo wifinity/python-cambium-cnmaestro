@@ -4,16 +4,16 @@ PYTHON ?= python3
 .DEFAULT_GOAL := help
 
 format: ## Format source files with black
-	uv run black src tests
+	uv run black cambium_cnmaestro tests
 
 format-check: ## Check formatting with black
-	uv run black --check --diff src tests
+	uv run black --check --diff cambium_cnmaestro tests
 
 lint: format-check ## Run flake8 lint checks
-	uv run flake8 src tests
+	uv run flake8 cambium_cnmaestro tests
 
 typecheck: ## Run mypy type checks
-	uv run mypy src/cambium_cnmaestro
+	uv run mypy cambium_cnmaestro
 
 unit-tests: ## Run unit tests
 	uv run pytest
