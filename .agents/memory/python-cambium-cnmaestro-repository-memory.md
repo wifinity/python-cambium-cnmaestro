@@ -9,15 +9,15 @@ Minimal Python SDK for Cambium cnMaestro.
 
 ## Architecture (layers)
 
-- **Client entry point**: `src/cambium_cnmaestro/client.py`
+- **Client entry point**: `cambium_cnmaestro/client.py`
   - `CnMaestroClient` wires the token provider + HTTP client + resources.
-- **Auth**: `src/cambium_cnmaestro/auth.py`
+- **Auth**: `cambium_cnmaestro/auth.py`
   - OAuth2 client-credentials token:
     - `POST /access/token`
     - HTTP Basic auth using `client_id:client_secret`
     - form body `grant_type=client_credentials`
   - Token is cached in-memory; cleared on 401/403.
-- **HTTP**: `src/cambium_cnmaestro/http.py`
+- **HTTP**: `cambium_cnmaestro/http.py`
   - `httpx.Client`
   - Retries on transport errors; exponential backoff
   - 429: uses `RateLimit-Reset` or `Retry-After` headers
@@ -26,10 +26,10 @@ Minimal Python SDK for Cambium cnMaestro.
     - 404 -> `CnMaestroNotFoundError`
     - other >=400 -> `CnMaestroHTTPError` (includes status + response text)
     - 204 -> returns `None`
-- **Errors**: `src/cambium_cnmaestro/errors.py`
-- **Operations**: `src/cambium_cnmaestro/operations/*`
+- **Errors**: `cambium_cnmaestro/errors.py`
+- **Operations**: `cambium_cnmaestro/operations/*`
   - Pure helpers for CLI polling and cnMatrix CLI output parsing.
-- **Resources**: `src/cambium_cnmaestro/resources/*`
+- **Resources**: `cambium_cnmaestro/resources/*`
   - Thin wrappers around REST endpoints; return raw decoded JSON (`Any`).
 
 ## Resource conventions
