@@ -20,6 +20,7 @@ class DeviceStatus:
     sync_status: str | None
     mac: str | None
     raw: dict[str, Any]
+    onboarding_state: str | None = None
 
 
 @dataclass(frozen=True)
@@ -38,3 +39,11 @@ class Interface:
     speed: float | None = None
     mtu: int | None = None
     mac_address: str | None = None
+
+
+@dataclass(frozen=True)
+class LldpNeighbor:
+    local_interface: str
+    remote_system_name: str
+    remote_port_id: str
+    chassis_id: str

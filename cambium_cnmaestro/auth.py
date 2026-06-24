@@ -13,6 +13,7 @@ from .errors import CnMaestroAuthError, CnMaestroHTTPError
 class OAuthToken:
     access_token: str
     expires_at_monotonic: float
+    redirect_uri: str | None = None
 
 
 class ClientCredentialsTokenProvider:
@@ -36,6 +37,16 @@ class ClientCredentialsTokenProvider:
 
     def clear_cache(self) -> None:
         self._token = None
+
+    def get_effective_base_url(self) -> str:
+        """Returns the redirect_uri from the last token fetch if present, else the configured base_url.
+
+        cnMaestro cloud returns a redirect_uri in the token response pointing to the actual
+        API server. The configured base_url is only an auth entry point.
+        """
+        if self._token is not None and self._token.redirect_uri:
+            return self._token.redirect_uri
+        return self._base_url
 
     def get_access_token(self) -> str:
         now = time.monotonic()
@@ -77,6 +88,9 @@ class ClientCredentialsTokenProvider:
         if not isinstance(expires_in, (int, float)) or expires_in <= 0:
             raise CnMaestroAuthError("Token response missing/invalid expires_in")
 
+        redirect_uri_raw = payload.get("redirect_uri")
+        redirect_uri = redirect_uri_raw.rstrip("/") if isinstance(redirect_uri_raw, str) and redirect_uri_raw else None
+
         # StackStorm pack caches token until half of expires_in; we replicate that behavior.
         expires_at = time.monotonic() + (float(expires_in) / 2.0)
-        return OAuthToken(access_token=access_token, expires_at_monotonic=expires_at)
+        return OAuthToken(access_token=access_token, expires_at_monotonic=expires_at, redirect_uri=redirect_uri)

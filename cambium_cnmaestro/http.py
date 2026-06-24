@@ -54,6 +54,9 @@ class CnMaestroHTTPClient:
         headers: dict[str, str] | None = None,
         auth: bool = True,
     ) -> Any:
+        # Pre-fetch token before building the URL so redirect_uri is available.
+        if auth:
+            self._token_provider.get_access_token()
         url = self._build_url(path)
         req_headers = self._build_headers(headers=headers, auth=auth)
 
@@ -121,7 +124,8 @@ class CnMaestroHTTPClient:
 
     def _build_url(self, path: str) -> str:
         path = path if path.startswith("/") else f"/{path}"
-        return f"{self._base_url}{self._api_prefix}{path}"
+        base = self._token_provider.get_effective_base_url()
+        return f"{base}{self._api_prefix}{path}"
 
     def _build_headers(self, *, headers: dict[str, str] | None, auth: bool) -> dict[str, str]:
         req_headers = {"Accept": "application/json"}

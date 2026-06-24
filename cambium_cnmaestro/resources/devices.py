@@ -7,8 +7,9 @@ from ..errors import CnMaestroError, CnMaestroHTTPError, CnMaestroNotFoundError
 from ..http import CnMaestroHTTPClient
 from ..operations.cli import poll_cli_until_complete
 from ..operations.cnmatrix_interfaces import parse_cnmatrix_show_interfaces_output
+from ..operations.cnmatrix_lldp import parse_cnmatrix_show_lldp_neighbors_output
 from ..paging import extract_single_item
-from ..results import DeviceStatus, Interface, UpsertResult
+from ..results import DeviceStatus, Interface, LldpNeighbor, UpsertResult
 
 
 class DevicesResource:
@@ -52,6 +53,12 @@ class DevicesResource:
     def _is_approved_but_not_online_error(self, e: CnMaestroHTTPError) -> bool:
         msg = e.response_text or str(e)
         return e.status_code == 500 and ("Device is already in approved state" in msg or "currently in updating" in msg)
+
+    def _build_update_payload(self, *, device: dict[str, Any]) -> dict[str, Any]:
+        # PUT /devices/{mac} schema has additionalProperties: false; `type` is not an allowed field.
+        payload = dict(device)
+        payload.pop("type", None)
+        return payload
 
     def _build_create_payload(self, *, device: dict[str, Any], msn: str | None) -> tuple[dict[str, Any], str]:
         create_payload = dict(device)
@@ -131,11 +138,19 @@ class DevicesResource:
 
         device_mac = device.get("mac") if isinstance(device.get("mac"), str) else None
 
+        onboarding_state: str | None = None
+        onboarding = device.get("onboarding")
+        if isinstance(onboarding, dict):
+            value = onboarding.get("state")
+            if isinstance(value, str):
+                onboarding_state = value
+
         return DeviceStatus(
             online=online,
             profile_attached=profile_attached,
             sync_status=sync_status,
             mac=device_mac,
+            onboarding_state=onboarding_state,
             raw=device,
         )
 
@@ -150,13 +165,14 @@ class DevicesResource:
         StackStorm parity helper for cnmaestro.upsert.devices:
         - Resolve by mac if provided; else search by msn (if provided).
         - Create when missing (requires type + msn, sets approved=True, strips overrides).
-        - Update when found.
+        - Update when found (strips type — not accepted by PUT /devices/{mac}).
         - Treat certain \"approved but not online\" server errors as a 423 soft-success.
         """
         resolved_mac = self._resolve_existing_mac(mac=mac, msn=msn)
         if resolved_mac is not None:
+            update_payload = self._build_update_payload(device=device)
             try:
-                self.update(mac=resolved_mac, device=device)
+                self.update(mac=resolved_mac, device=update_payload)
             except CnMaestroHTTPError as e:
                 if self._is_approved_but_not_online_error(e):
                     return UpsertResult(
@@ -253,6 +269,30 @@ class DevicesResource:
             poll_max_attempts=poll_max_attempts,
         )
         return parse_cnmatrix_show_interfaces_output(raw_interface_output=raw_output)
+
+    def get_lldp_neighbors(
+        self,
+        *,
+        mac: str | None = None,
+        msn: str | None = None,
+        command: str = "show lldp neighbors detail",
+        trigger_retry_delay_seconds: float = 60.0,
+        trigger_max_attempts: int = 20,
+        initial_delay_seconds: float = 10.0,
+        poll_interval_seconds: float = 15.0,
+        poll_max_attempts: int = 3,
+    ) -> List[LldpNeighbor]:
+        raw_output = self.run_cli_command_and_wait(
+            mac=mac,
+            msn=msn,
+            command=command,
+            trigger_retry_delay_seconds=trigger_retry_delay_seconds,
+            trigger_max_attempts=trigger_max_attempts,
+            initial_delay_seconds=initial_delay_seconds,
+            poll_interval_seconds=poll_interval_seconds,
+            poll_max_attempts=poll_max_attempts,
+        )
+        return parse_cnmatrix_show_lldp_neighbors_output(raw_output=raw_output)
 
     def _run_cli_with_retry(
         self,

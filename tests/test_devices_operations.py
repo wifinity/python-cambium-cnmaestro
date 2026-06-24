@@ -8,11 +8,17 @@ from cambium_cnmaestro.errors import CnMaestroError, CnMaestroNotFoundError
 BASE_URL = "https://cnmaestro.example.test"
 
 
-def _mock_token(httpx_mock) -> None:  # pytest-httpx fixture
+REDIRECT_URL = "https://cnmaestro-redirect.example.test"
+
+
+def _mock_token(httpx_mock, *, redirect_uri: str | None = None) -> None:  # pytest-httpx fixture
+    body: dict = {"access_token": "token", "expires_in": 3600}
+    if redirect_uri is not None:
+        body["redirect_uri"] = redirect_uri
     httpx_mock.add_response(
         method="POST",
         url=f"{BASE_URL}/api/v2/access/token",
-        json={"access_token": "token", "expires_in": 3600},
+        json=body,
         headers={"Content-Type": "application/json"},
     )
 
@@ -86,6 +92,53 @@ def test_devices_get_status_projects_fields(httpx_mock) -> None:
     assert status.online is True
     assert status.profile_attached == "building-a"
     assert status.sync_status == "IN_SYNC"
+    assert status.onboarding_state is None
+
+
+def test_devices_get_status_populates_onboarding_state(httpx_mock) -> None:
+    _mock_token(httpx_mock)
+    httpx_mock.add_response(
+        method="GET",
+        url=f"{BASE_URL}/api/v2/devices/aa:bb:cc",
+        json={
+            "paging": {"total": 1},
+            "data": [
+                {
+                    "mac": "aa:bb:cc",
+                    "online": True,
+                    "onboarding": {"state": "ONBOARDED"},
+                }
+            ],
+        },
+        headers={"Content-Type": "application/json"},
+    )
+
+    client = CnMaestroClient(base_url=BASE_URL, client_id="id", client_secret="secret")
+    status = client.devices.get_status(mac="aa:bb:cc")
+    assert status.onboarding_state == "ONBOARDED"
+
+
+def test_devices_get_status_onboarding_state_updating(httpx_mock) -> None:
+    _mock_token(httpx_mock)
+    httpx_mock.add_response(
+        method="GET",
+        url=f"{BASE_URL}/api/v2/devices/aa:bb:cc",
+        json={
+            "paging": {"total": 1},
+            "data": [
+                {
+                    "mac": "aa:bb:cc",
+                    "online": True,
+                    "onboarding": {"state": "UPDATING"},
+                }
+            ],
+        },
+        headers={"Content-Type": "application/json"},
+    )
+
+    client = CnMaestroClient(base_url=BASE_URL, client_id="id", client_secret="secret")
+    status = client.devices.get_status(mac="aa:bb:cc")
+    assert status.onboarding_state == "UPDATING"
 
 
 def test_devices_upsert_creates_when_missing(httpx_mock) -> None:
@@ -166,6 +219,21 @@ def test_devices_get_status_raises_not_found(httpx_mock) -> None:
     client = CnMaestroClient(base_url=BASE_URL, client_id="id", client_secret="secret")
     with pytest.raises(CnMaestroNotFoundError):
         client.devices.get_status(mac="aa:bb:cc")
+
+
+def test_devices_get_uses_redirect_uri_as_base_url(httpx_mock) -> None:
+    _mock_token(httpx_mock, redirect_uri=REDIRECT_URL)
+    httpx_mock.add_response(
+        method="GET",
+        url=f"{REDIRECT_URL}/api/v2/devices/aa:bb:cc",
+        json={"paging": {"total": 1}, "data": [{"mac": "aa:bb:cc", "online": True}]},
+        headers={"Content-Type": "application/json"},
+    )
+
+    client = CnMaestroClient(base_url=BASE_URL, client_id="id", client_secret="secret")
+    device = client.devices.find(mac="aa:bb:cc")
+    assert device is not None
+    assert device["mac"] == "aa:bb:cc"
 
 
 def test_devices_bulk_upsert_processes_each_update(httpx_mock) -> None:

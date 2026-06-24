@@ -1,0 +1,13 @@
+Value Required LOCAL_IFACE (\S+)
+Value CHASSIS_ID ([0-9a-fA-F:\.]+)
+Value PORT_ID (.+)
+Value SYSTEM_NAME (.+)
+
+Start
+  ^>>>>\s+Local Interface\s*:\s*${LOCAL_IFACE}\s*<<<<
+  ^Chassis ID\s{2,}:\s*${CHASSIS_ID}
+  ^Port ID\s{2,}:\s*${PORT_ID}
+  ^System Name\s{2,}:\s*${SYSTEM_NAME}
+  ^-{10,} -> Record
+  ^__TEXTFSM_EOF__ -> Record
+  ^. -> Continue
