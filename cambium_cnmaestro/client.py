@@ -4,6 +4,7 @@ from .auth import ClientCredentialsTokenProvider
 from .http import CnMaestroHTTPClient
 from .resources.cnmatrix import CnMatrixResource
 from .resources.devices import DevicesResource
+from .resources.jobs import JobsResource
 from .resources.networks import NetworksResource
 from .resources.sites import SitesResource
 from .resources.wifi_enterprise import WiFiEnterpriseResource
@@ -43,6 +44,7 @@ class CnMaestroClient:
         self.sites = SitesResource(http)
         self.wifi_enterprise = WiFiEnterpriseResource(http)
         self.cnmatrix = CnMatrixResource(http)
+        self.jobs = JobsResource(http)
 
     def __enter__(self) -> CnMaestroClient:
         return self

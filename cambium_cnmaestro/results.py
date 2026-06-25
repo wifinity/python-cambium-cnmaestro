@@ -42,6 +42,24 @@ class Interface:
 
 
 @dataclass(frozen=True)
+class JobStatus:
+    """Projected status of a cnMaestro configuration or software job.
+
+    Observed state values: 'Processing', 'Running', 'Completed', 'Failed'.
+    """
+
+    job_id: str | None
+    state: str | None
+    type: str | None
+    count: int | None
+    failed: int | None
+    remaining: int | None
+    skipped: int | None
+    success: int | None
+    raw: dict[str, Any]
+
+
+@dataclass(frozen=True)
 class LldpNeighbor:
     local_interface: str
     remote_system_name: str

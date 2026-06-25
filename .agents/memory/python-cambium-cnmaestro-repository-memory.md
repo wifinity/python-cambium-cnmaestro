@@ -75,6 +75,13 @@ Higher-level helpers layered on top of REST CRUD wrappers:
   - `SwitchGroupsResource.upsert(switch_group=...)` (GET then PUT/POST)
   - `PortsResource.update(ports=...)` (maps to `cnmaestro.put.cnmatrix.ports`)
   - `SwitchGroupsPortsResource.list_for_switch_group(...)` / `get_for_device(...)`
+- Jobs:
+  - `JobsResource.list(type=...)` (type is required: 'software'|'configuration')
+  - `JobsResource.get(job_id=...)`
+  - `JobsResource.get_details(job_id=...)`
+  - `JobsResource.get_status(job_id=...)` → `JobStatus` (state, type, device counts, raw)
+  - `JobStatus.state` observed values: 'Processing', 'Running', 'Completed', 'Failed'
+  - `PUT /devices/{mac}` returns a `device.commit` body with `job_id`/`state` — only device config push spawns a pollable job; ports and switch_group PUTs return only `{message: "Success"}`
 
 ## Implemented REST endpoint groups (as of today)
 
@@ -88,6 +95,7 @@ See `docs/endpoint-checklist.md` for the authoritative list. Current resources i
   - `/cnmatrix/switch_groups/*`
   - `/cnmatrix/switch_groups_ports/*`
   - `PUT /cnmatrix/ports`
+- `jobs.py`: `GET /jobs` (requires `type` param), `GET /jobs/{job_id}`, `GET /jobs/{job_id}/details`
 
 ## Tests
 
@@ -102,6 +110,7 @@ See `docs/endpoint-checklist.md` for the authoritative list. Current resources i
   - `tests/test_networks_operations.py`
   - `tests/test_sites_operations.py`
   - `tests/test_wifi_enterprise_operations.py`
+  - `tests/test_jobs_operations.py`
 - When adding tests, prefer **pytest-httpx** (already included in `pyproject.toml` dev extras) to mock:
   - token acquisition (`POST /api/v2/access/token`)
   - each endpoint request/response

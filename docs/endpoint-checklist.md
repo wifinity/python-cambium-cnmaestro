@@ -57,10 +57,17 @@ This checklist tracks implemented SDK coverage and is cross-checked against the 
 - [x] `GET /cnmatrix/switch_groups_ports/{switch_group_name}/{device_mac}`
 - [x] `PUT /cnmatrix/ports` (body includes `ports` array)
 
+## Jobs
+
+- [x] `GET /jobs` (requires `type=software|configuration` query param)
+- [x] `GET /jobs/{job_id}`
+- [x] `GET /jobs/{job_id}/details`
+
 ## Operations helpers
 
 Higher-level helpers layered on top of CRUD wrappers (these are **SDK methods**, not REST endpoints):
 
+- `client.jobs.get_status(job_id=...)` → `JobStatus` (state, type, device counts, raw)
 - `client.devices.find(mac=..., msn=...)`
 - `client.devices.get_status(mac=..., msn=...)`
 - `client.devices.upsert(device=..., mac=..., msn=...)`

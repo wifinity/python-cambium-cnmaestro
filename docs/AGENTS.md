@@ -15,7 +15,7 @@ NetBox integration.
 | `cambium_cnmaestro/auth.py` | OAuth2 client-credentials token (in-memory cache) |
 | `cambium_cnmaestro/http.py` | `httpx` client, retries, error mapping |
 | `cambium_cnmaestro/errors.py` | `CnMaestroAuthError`, `CnMaestroNotFoundError`, etc. |
-| `cambium_cnmaestro/resources/` | Thin REST wrappers (`devices`, `networks`, `sites`, `wifi_enterprise`, `cnmatrix`) |
+| `cambium_cnmaestro/resources/` | Thin REST wrappers (`devices`, `networks`, `sites`, `wifi_enterprise`, `cnmatrix`, `jobs`) |
 | `cambium_cnmaestro/operations/` | CLI polling and cnMatrix interface parsing helpers |
 | `cambium_cnmaestro/paging.py` | Paging envelope helpers |
 | `cambium_cnmaestro/textfsm_templates/` | TextFSM for cnMatrix `show interfaces` |
@@ -48,6 +48,7 @@ When changing these, update `docs/endpoint-checklist.md` (Operations helpers),
 - `client.cnmatrix.switch_groups.upsert(switch_group=...)`
 - `client.cnmatrix.ports.update(ports=...)`
 - `client.cnmatrix.switch_groups_ports.list_for_switch_group(...)`
+- `client.jobs.get_status(job_id=...)` → `JobStatus` (state, type, device counts, raw)
 
 ## Where to look
 
